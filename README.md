@@ -1,4 +1,4 @@
-# BitrixRedisCache
+# dimmount.rediscache
 Модуль Битрикс для использования Redis в роли сервера кеша
 
 ## Установка Redis  
