@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2017. Dmitry Kozlov. https://github.com/DimMount
  */
@@ -8,22 +9,18 @@ class CPHPCacheRedis implements ICacheBackend
      * @var Redis $obRedis
      */
     private static $obRedis;
-
     /**
      * @var array массив с хешами base_dir
      */
     private static $basedir_version = [];
-
     /**
      * @var string соль для ключей кеша
      */
     private $sid = '';
-
     /**
      * @var mixed Статистика записи кеша
      */
     public $written = 0;
-
     /**
      * @var mixed Статистика чтения кеша
      */
@@ -32,7 +29,7 @@ class CPHPCacheRedis implements ICacheBackend
     /**
      * CPHPCacheRedis constructor.
      */
-    public function __construct()
+    public function __construct ()
     {
         $this->CPHPCacheRedis();
     }
@@ -40,26 +37,30 @@ class CPHPCacheRedis implements ICacheBackend
     /**
      * Инициализация соединения с redis
      */
-    public function CPHPCacheRedis()
+    public function CPHPCacheRedis ()
     {
         if (class_exists('Redis')) {
-            if (!is_object(self::$obRedis)) {
-                $redisIP = (defined('BX_REDIS_IP') ? BX_REDIS_IP : '127.0.0.1');
-                $redisPort = (defined('BX_REDIS_PORT') ? BX_REDIS_PORT : '6379');
-                self::$obRedis = new Redis();
-                self::$obRedis->connect($redisIP, $redisPort);
-            }
-
-            if (!defined('BX_REDISCACHE_CONNECTED')) {
-                if (self::$obRedis->ping() === '+PONG') {
-                    define('BX_REDISCACHE_CONNECTED', true);
-                    register_shutdown_function(['CPHPCacheRedis', 'close']);
+            try {
+                if (!is_object(self::$obRedis)) {
+                    $redisIP = (defined('BX_REDIS_IP') ? BX_REDIS_IP : '127.0.0.1');
+                    $redisPort = (defined('BX_REDIS_PORT') ? BX_REDIS_PORT : '6379');
+                    self::$obRedis = new Redis();
+                    self::$obRedis->connect($redisIP, $redisPort);
                 }
-            }
 
-            $this->sid = 'BX';
-            if (defined('BX_CACHE_SID')) {
-                $this->sid = BX_CACHE_SID;
+                if (!defined('BX_REDISCACHE_CONNECTED')) {
+                    if (self::$obRedis->ping() === '+PONG') {
+                        define('BX_REDISCACHE_CONNECTED', true);
+                        register_shutdown_function(['CPHPCacheRedis', 'close']);
+                    }
+                }
+
+                $this->sid = 'BX';
+                if (defined('BX_CACHE_SID')) {
+                    $this->sid = BX_CACHE_SID;
+                }
+            } catch (RedisException $e) {
+                \AddMessage2Log($e->getMessage(), 'dimmount.rediscache');
             }
         }
     }
@@ -67,7 +68,7 @@ class CPHPCacheRedis implements ICacheBackend
     /**
      * Закрытие соединения с redis
      */
-    public function close()
+    public function close ()
     {
         if (defined('BX_REDISCACHE_CONNECTED') && is_object(self::$obRedis)) {
             self::$obRedis->close();
@@ -77,7 +78,7 @@ class CPHPCacheRedis implements ICacheBackend
     /**
      * @return bool флаг наличия соединения с redis
      */
-    public function IsAvailable()
+    public function IsAvailable ()
     {
         return defined('BX_REDISCACHE_CONNECTED');
     }
@@ -91,7 +92,7 @@ class CPHPCacheRedis implements ICacheBackend
      *
      * @return bool
      */
-    public function clean($basedir, $initdir = false, $filename = false)
+    public function clean ($basedir, $initdir = false, $filename = false)
     {
         if (is_object(self::$obRedis)) {
             if ('' !== $filename) {
@@ -166,7 +167,7 @@ class CPHPCacheRedis implements ICacheBackend
      *
      * @return bool
      */
-    public function read(&$arAllVars, $basedir, $initdir, $filename, $TTL)
+    public function read (&$arAllVars, $basedir, $initdir, $filename, $TTL)
     {
         if (!isset(self::$basedir_version[$basedir])) {
             self::$basedir_version[$basedir] = self::$obRedis->get($this->sid . $basedir);
@@ -206,7 +207,7 @@ class CPHPCacheRedis implements ICacheBackend
      * @param $filename
      * @param $TTL
      */
-    public function write($arAllVars, $basedir, $initdir, $filename, $TTL)
+    public function write ($arAllVars, $basedir, $initdir, $filename, $TTL)
     {
         if (!isset(self::$basedir_version[$basedir])) {
             self::$basedir_version[$basedir] = self::$obRedis->get($this->sid . $basedir);
@@ -241,7 +242,7 @@ class CPHPCacheRedis implements ICacheBackend
      *
      * @return bool
      */
-    public function IsCacheExpired($path)
+    public function IsCacheExpired ($path)
     {
         return false;
     }
