@@ -70,9 +70,13 @@ class CPHPCacheRedis implements ICacheBackend
      */
     public function close ()
     {
-        if (defined('BX_REDISCACHE_CONNECTED') && is_object(self::$obRedis)) {
-            self::$obRedis->close();
-        }
+        // В некоторых модулях битрикса обнаружен баг (замечено в webservice)
+        // В эпилоге битрикс закрывает соединение с кэшем, а потом снова обращается к кэшу, что вызывает ошибку
+        // Поэтому закрытие временно коментируем. По завершении хита соединение с редисом все равно закроется
+
+        // if (defined('BX_REDISCACHE_CONNECTED') && is_object(self::$obRedis)) {
+        //   self::$obRedis->close();
+        // }
     }
 
     /**
