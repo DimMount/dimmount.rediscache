@@ -9,18 +9,22 @@ class CPHPCacheRedis implements ICacheBackend
      * @var Redis $obRedis
      */
     private static $obRedis;
+
     /**
      * @var array массив с хешами base_dir
      */
     private static $basedir_version = [];
+
     /**
      * @var string соль для ключей кеша
      */
     private $sid = '';
+
     /**
      * @var mixed Статистика записи кеша
      */
     public $written = 0;
+
     /**
      * @var mixed Статистика чтения кеша
      */
@@ -29,7 +33,7 @@ class CPHPCacheRedis implements ICacheBackend
     /**
      * CPHPCacheRedis constructor.
      */
-    public function __construct ()
+    public function __construct()
     {
         $this->CPHPCacheRedis();
     }
@@ -37,7 +41,7 @@ class CPHPCacheRedis implements ICacheBackend
     /**
      * Инициализация соединения с redis
      */
-    public function CPHPCacheRedis ()
+    public function CPHPCacheRedis()
     {
         if (class_exists('Redis')) {
             try {
@@ -68,7 +72,7 @@ class CPHPCacheRedis implements ICacheBackend
     /**
      * Закрытие соединения с redis
      */
-    public function close ()
+    public function close()
     {
         // В некоторых модулях битрикса обнаружен баг (замечено в webservice)
         // В эпилоге битрикс закрывает соединение с кэшем, а потом снова обращается к кэшу, что вызывает ошибку
@@ -82,7 +86,7 @@ class CPHPCacheRedis implements ICacheBackend
     /**
      * @return bool флаг наличия соединения с redis
      */
-    public function IsAvailable ()
+    public function IsAvailable()
     {
         return defined('BX_REDISCACHE_CONNECTED');
     }
@@ -96,10 +100,10 @@ class CPHPCacheRedis implements ICacheBackend
      *
      * @return bool
      */
-    public function clean ($basedir, $initdir = false, $filename = false)
+    public function clean($basedir, $initdir = false, $filename = false)
     {
         if (is_object(self::$obRedis)) {
-            if ('' !== $filename) {
+            if ($filename) {
                 if (!isset(self::$basedir_version[$basedir])) {
                     self::$basedir_version[$basedir] = self::$obRedis->get($this->sid . $basedir);
                 }
@@ -108,18 +112,18 @@ class CPHPCacheRedis implements ICacheBackend
                     return true;
                 }
 
-                if ($initdir !== false) {
+                if ($initdir) {
                     $initdir_version = self::$obRedis->get(self::$basedir_version[$basedir] . '|' . $initdir);
-                    if ($initdir_version === false || $initdir_version === '') {
+                    if (!$initdir_version) {
                         return true;
                     }
                 } else {
-                    $initdir_version = "";
+                    $initdir_version = '';
                 }
 
                 self::$obRedis->del(self::$basedir_version[$basedir] . '|' . $initdir_version . '|' . $filename);
             } else {
-                if ('' !== $initdir) {
+                if ($initdir) {
                     if (!isset(self::$basedir_version[$basedir])) {
                         self::$basedir_version[$basedir] = self::$obRedis->get($this->sid . $basedir);
                     }
@@ -129,7 +133,7 @@ class CPHPCacheRedis implements ICacheBackend
                     }
 
                     $initdir_version = self::$obRedis->get(self::$basedir_version[$basedir] . '|' . $initdir);
-                    if ($initdir_version === false || $initdir_version === '') {
+                    if (!$initdir_version) {
                         return true;
                     }
 
@@ -171,7 +175,7 @@ class CPHPCacheRedis implements ICacheBackend
      *
      * @return bool
      */
-    public function read (&$arAllVars, $basedir, $initdir, $filename, $TTL)
+    public function read(&$arAllVars, $basedir, $initdir, $filename, $TTL)
     {
         if (!isset(self::$basedir_version[$basedir])) {
             self::$basedir_version[$basedir] = self::$obRedis->get($this->sid . $basedir);
@@ -181,9 +185,9 @@ class CPHPCacheRedis implements ICacheBackend
             return false;
         }
 
-        if ($initdir !== false) {
+        if ($initdir) {
             $initdir_version = self::$obRedis->get(self::$basedir_version[$basedir] . '|' . $initdir);
-            if ($initdir_version === false || $initdir_version === '') {
+            if (!$initdir_version) {
                 return false;
             }
         } else {
@@ -192,7 +196,7 @@ class CPHPCacheRedis implements ICacheBackend
 
         $serialAllVars = self::$obRedis->get(self::$basedir_version[$basedir] . '|' . $initdir_version . '|' . $filename);
 
-        if ($serialAllVars === false) {
+        if (!$serialAllVars) {
             return false;
         }
 
@@ -211,20 +215,20 @@ class CPHPCacheRedis implements ICacheBackend
      * @param $filename
      * @param $TTL
      */
-    public function write ($arAllVars, $basedir, $initdir, $filename, $TTL)
+    public function write($arAllVars, $basedir, $initdir, $filename, $TTL)
     {
         if (!isset(self::$basedir_version[$basedir])) {
             self::$basedir_version[$basedir] = self::$obRedis->get($this->sid . $basedir);
         }
 
-        if (self::$basedir_version[$basedir] === false || self::$basedir_version[$basedir] === '') {
+        if (!self::$basedir_version[$basedir]) {
             self::$basedir_version[$basedir] = $this->sid . md5(mt_rand());
             self::$obRedis->set($this->sid . $basedir, self::$basedir_version[$basedir]);
         }
 
-        if ($initdir !== false) {
+        if ($initdir) {
             $initdir_version = self::$obRedis->get(self::$basedir_version[$basedir] . '|' . $initdir);
-            if ($initdir_version === false || $initdir_version === '') {
+            if (!$initdir_version) {
                 $initdir_version = $this->sid . md5(mt_rand());
                 self::$obRedis->set(self::$basedir_version[$basedir] . '|' . $initdir, $initdir_version);
             }
@@ -246,7 +250,7 @@ class CPHPCacheRedis implements ICacheBackend
      *
      * @return bool
      */
-    public function IsCacheExpired ($path)
+    public function IsCacheExpired($path)
     {
         return false;
     }
